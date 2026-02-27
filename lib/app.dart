@@ -4,6 +4,7 @@ import 'features/auth/presentation/role_selection_screen.dart';
 import 'features/auth/presentation/organization_signup_screen.dart';
 import 'features/auth/presentation/volunteer_signup_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/volunteer/presentation/screens/volunteer_dashboard_screen.dart';
 
 class GivvApp extends StatelessWidget {
   const GivvApp({super.key});
@@ -29,6 +30,12 @@ class GivvApp extends StatelessWidget {
         '/signup-org': (context) => const OrganizationSignupScreen(),
         '/signup-volunteer': (context) => const VolunteerSignupScreen(),
         '/login': (context) => const LoginScreen(),
+        '/volunteer-dashboard': (context) {
+          final args = ModalRoute.of(context)?.settings.arguments;
+          final volunteerId = args is String ? args : 'default_volunteer_id';
+          return VolunteerDashboardScreen(volunteerId: volunteerId);
+        },
+        // … other routes …
       },
     );
   }
