@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "645799072367",
+    "project_id": "givv-65584",
+    "storage_bucket": "givv-65584.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645799072367:android:a01ac4fc87d075ae28f39a",
+        "android_client_info": {
+          "package_name": "com.example.givv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhdkRDPgUTy38KsS4zo2SKN3Z2L9vN3n0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:645799072367:android:1d4df7945ec2e3ca28f39a",
+        "android_client_info": {
+          "package_name": "com.team2.givv"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDhdkRDPgUTy38KsS4zo2SKN3Z2L9vN3n0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

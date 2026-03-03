@@ -1,24 +1,67 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth_providers.dart';
 
-class SplashScreen extends StatefulWidget {
+class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
 
   @override
-  State<SplashScreen> createState() => _SplashScreenState();
+  ConsumerState<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
+class _SplashScreenState extends ConsumerState<SplashScreen> {
+  bool _navigated = false;
+
   @override
   void initState() {
     super.initState();
-    _navigateToNext();
+    // Give Firebase a moment to emit auth state
+    Future.delayed(const Duration(milliseconds: 2000), _checkAuthAndNavigate);
   }
 
-  void _navigateToNext() async {
-    await Future.delayed(const Duration(milliseconds: 2500));
-    if (mounted) {
-      Navigator.pushReplacementNamed(context, '/role-selection');
-    }
+  Future<void> _checkAuthAndNavigate() async {
+    if (!mounted || _navigated) return;
+
+    final authAsync = ref.read(authStateProvider);
+
+    authAsync.when(
+      data: (firebaseUser) async {
+        if (!mounted || _navigated) return;
+        _navigated = true;
+
+        if (firebaseUser == null) {
+          // Not logged in → role selection
+          context.go('/select-role');
+        } else {
+          // Logged in → fetch role and redirect
+          final repo = ref.read(authRepositoryProvider);
+          final role = await repo.getCurrentUserRole();
+          if (!mounted) return;
+
+          if (role == 'organizationAdmin') {
+            context.go('/org-dashboard');
+          } else if (role == 'volunteer') {
+            context.go('/volunteer-dashboard');
+          } else {
+            // Unknown role → fallback to select-role
+            context.go('/select-role');
+          }
+        }
+      },
+      loading: () {
+        // Auth state still loading — listen again after short delay
+        Future.delayed(
+          const Duration(milliseconds: 500),
+          _checkAuthAndNavigate,
+        );
+      },
+      error: (_, __) {
+        if (!mounted || _navigated) return;
+        _navigated = true;
+        context.go('/select-role');
+      },
+    );
   }
 
   @override
@@ -29,7 +72,7 @@ class _SplashScreenState extends State<SplashScreen> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Background soft glow (approximate from figma)
+          // Background soft glow
           Positioned(
             top: -100,
             right: -100,
@@ -67,7 +110,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-                // App Name
                 const Text(
                   'GIVV',
                   style: TextStyle(
@@ -88,7 +130,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 60),
-                // Loading Section
                 const Text(
                   'INITIALIZING •',
                   style: TextStyle(
@@ -99,23 +140,13 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                // Progress Bar
-                Container(
+                // Animated loading indicator
+                const SizedBox(
                   width: 140,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                  child: FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: 0.6, // Static placeholder for visual
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: primaryColor,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
+                  child: LinearProgressIndicator(
+                    backgroundColor: Color(0xFFF3F4F6),
+                    color: primaryColor,
+                    minHeight: 4,
                   ),
                 ),
                 const SizedBox(height: 40),
