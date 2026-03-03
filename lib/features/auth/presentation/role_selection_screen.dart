@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import '../providers/auth_providers.dart';
 
-class RoleSelectionScreen extends StatefulWidget {
+class RoleSelectionScreen extends ConsumerStatefulWidget {
   const RoleSelectionScreen({super.key});
 
   @override
-  State<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+  ConsumerState<RoleSelectionScreen> createState() =>
+      _RoleSelectionScreenState();
 }
 
-class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
+class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   String? _selectedRole; // 'org' or 'volunteer'
 
   @override
@@ -21,16 +25,19 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
       body: SafeArea(
         child: SingleChildScrollView(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Back Button Replacement
+                // Back Button
                 IconButton(
                   padding: EdgeInsets.zero,
                   alignment: Alignment.centerLeft,
                   icon: const Icon(Icons.arrow_back, color: textColor),
-                  onPressed: () => Navigator.of(context).pop(),
+                  onPressed: () {
+                    if (context.canPop()) context.pop();
+                  },
                 ),
                 const Center(
                   child: Text(
@@ -60,47 +67,55 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   ),
                 ),
                 const SizedBox(height: 40),
-                
+
                 // Organization Card
                 _buildRoleCard(
                   id: 'org',
                   title: 'Organization Admin',
-                  description: 'Manage your non-profit, post volunteer opportunities, and track your community impact in one place.',
+                  description:
+                      'Manage your non-profit, post volunteer opportunities, and track your community impact in one place.',
                   icon: Icons.business_outlined,
                   isSelected: _selectedRole == 'org',
                 ),
-                
+
                 const SizedBox(height: 20),
-                
+
                 // Volunteer Card
                 _buildRoleCard(
                   id: 'volunteer',
                   title: 'Volunteer',
-                  description: 'Find local causes, sign up for upcoming events, and start giving back to your community today.',
+                  description:
+                      'Find local causes, sign up for upcoming events, and start giving back to your community today.',
                   icon: Icons.person_outline,
                   isSelected: _selectedRole == 'volunteer',
                 ),
-                
+
                 const SizedBox(height: 40),
-                
+
                 // Continue Button
                 SizedBox(
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _selectedRole == null 
-                      ? null 
-                      : () {
-                          if (_selectedRole == 'org') {
-                            Navigator.pushNamed(context, '/signup-org');
-                          } else {
-                            Navigator.pushNamed(context, '/signup-volunteer');
-                          }
-                        },
+                    onPressed: _selectedRole == null
+                        ? null
+                        : () {
+                            // Store role in provider
+                            ref
+                                .read(selectedRoleProvider.notifier)
+                                .state = _selectedRole;
+
+                            if (_selectedRole == 'org') {
+                              context.push('/org-signup');
+                            } else {
+                              context.push('/volunteer-signup');
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: primaryColor,
                       foregroundColor: Colors.white,
-                      disabledBackgroundColor: primaryColor.withOpacity(0.5),
+                      disabledBackgroundColor:
+                          primaryColor.withOpacity(0.5),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -111,7 +126,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                       children: [
                         Text(
                           'Continue',
-                          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 16, fontWeight: FontWeight.bold),
                         ),
                         SizedBox(width: 8),
                         Icon(Icons.arrow_forward, size: 20),
@@ -119,15 +135,39 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                     ),
                   ),
                 ),
-                
+
                 const SizedBox(height: 16),
                 const Center(
                   child: Text(
                     'You can change your role later in settings',
-                    style: TextStyle(fontSize: 12, color: Color(0xFF9CA3AF)),
+                    style: TextStyle(
+                        fontSize: 12, color: Color(0xFF9CA3AF)),
                   ),
                 ),
                 const SizedBox(height: 24),
+
+                // Login link
+                Center(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Text(
+                        'Already have an account? ',
+                        style: TextStyle(color: Color(0xFF6B7280)),
+                      ),
+                      TextButton(
+                        onPressed: () => context.push('/login'),
+                        child: const Text(
+                          'Log in',
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),
@@ -157,13 +197,15 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
             color: isSelected ? primaryColor : const Color(0xFFE5E7EB),
             width: 2,
           ),
-          boxShadow: isSelected ? [
-            BoxShadow(
-              color: primaryColor.withOpacity(0.1),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            )
-          ] : [],
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: primaryColor.withOpacity(0.1),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  )
+                ]
+              : [],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -180,7 +222,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
                   child: Icon(icon, color: primaryColor, size: 24),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle, color: primaryColor, size: 24),
+                  const Icon(Icons.check_circle,
+                      color: primaryColor, size: 24),
               ],
             ),
             const SizedBox(height: 16),
@@ -207,7 +250,8 @@ class _RoleSelectionScreenState extends State<RoleSelectionScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: isSelected ? primaryColor : const Color(0xFF9CA3AF),
+                color:
+                    isSelected ? primaryColor : const Color(0xFF9CA3AF),
               ),
             ),
           ],
