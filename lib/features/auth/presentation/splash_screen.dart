@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_providers.dart';
+import '../models/user_model.dart';
 
 class SplashScreen extends ConsumerStatefulWidget {
   const SplashScreen({super.key});
@@ -39,9 +40,9 @@ class _SplashScreenState extends ConsumerState<SplashScreen> {
           final role = await repo.getCurrentUserRole();
           if (!mounted) return;
 
-          if (role == 'organizationAdmin') {
+          if (role == UserRole.organizer) {
             context.go('/org-dashboard');
-          } else if (role == 'volunteer') {
+          } else if (role == UserRole.volunteer) {
             context.go('/volunteer-dashboard');
           } else {
             // Unknown role → fallback to select-role

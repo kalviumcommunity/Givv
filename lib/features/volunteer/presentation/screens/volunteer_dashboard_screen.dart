@@ -1,273 +1,269 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:givv/features/auth/providers/auth_providers.dart';
+import '../../../auth/providers/auth_providers.dart';
+import '../../../organization/models/event_model.dart';
+import '../../data/repositories/volunteer_repository.dart';
+import 'package:intl/intl.dart';
+import 'my_events_screen.dart';
+import '../../../auth/presentation/profile_screen.dart';
 
-class VolunteerDashboardScreen extends ConsumerWidget {
+final nearbyEventsProvider = FutureProvider<List<Event>>((ref) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return [];
+  return VolunteerRepository().getNearbyEvents(user.city);
+});
+
+final discoverEventsProvider = FutureProvider<List<Event>>((ref) async {
+  return VolunteerRepository().getAllUpcomingEvents();
+});
+
+class VolunteerDashboardScreen extends ConsumerStatefulWidget {
   const VolunteerDashboardScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    const primaryColor = Color(0xFF6794AA);
-    const textColor = Color(0xFF1F2937);
+  ConsumerState<VolunteerDashboardScreen> createState() => _VolunteerDashboardScreenState();
+}
 
+class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScreen> {
+  int _selectedIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFFF8FAFC),
       body: SafeArea(
-        child: Column(
-          children: [
-            // ── Header ──────────────────────────────────────────────────────
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: const Icon(
-                          Icons.volunteer_activism,
-                          color: primaryColor,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'GIVV',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                          letterSpacing: 2,
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.logout_outlined, color: textColor),
-                    onPressed: () async {
-                      final repo = ref.read(authRepositoryProvider);
-                      await repo.signOut();
-                      if (context.mounted) context.go('/select-role');
-                    },
-                  ),
-                ],
-              ),
-            ),
-
-            // ── Body ─────────────────────────────────────────────────────────
-            Expanded(
-              child: userAsync.when(
-                loading: () => const Center(
-                  child: CircularProgressIndicator(color: primaryColor),
-                ),
-                error: (e, _) => Center(child: Text('Error: $e')),
-                data: (user) => SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Welcome card
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.all(24),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                            colors: [
-                              primaryColor,
-                              primaryColor.withOpacity(0.75),
-                            ],
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'Welcome back,',
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white70,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              user?.name ?? 'Volunteer',
-                              style: const TextStyle(
-                                fontSize: 24,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 4),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(20),
-                              ),
-                              child: const Text(
-                                '• Volunteer',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 12),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 32),
-
-                      const Text(
-                        'Your Dashboard',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: textColor,
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      // Stat cards
-                      Row(
-                        children: [
-                          _buildStatCard(
-                              'Hours Given', '0', Icons.access_time_outlined),
-                          const SizedBox(width: 16),
-                          _buildStatCard('Events', '0',
-                              Icons.event_available_outlined),
-                        ],
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Quick info
-                      _buildInfoTile(
-                          Icons.email_outlined, 'Email', user?.email ?? '—'),
-                      _buildInfoTile(
-                          Icons.phone_outlined, 'Phone', user?.phone ?? '—'),
-                      _buildInfoTile(
-                          Icons.location_on_outlined,
-                          'Location',
-                          '${user?.city ?? '—'}, ${user?.country ?? ''}'),
-                      if (user?.organizationCode != null)
-                        _buildInfoTile(Icons.group_outlined, 'Organization Code',
-                            user!.organizationCode!),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
+        child: userAsync.when(
+          data: (user) {
+            if (user == null) return const Center(child: Text('User not found'));
+            return IndexedStack(
+              index: _selectedIndex,
+              children: [
+                _buildDashView(context, user),
+                _buildDiscoverView(context),
+                const MyEventsScreen(isTab: true),
+                const ProfileScreen(isTab: true),
+              ],
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Center(child: Text('Error: $err')),
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _selectedIndex,
+        selectedItemColor: const Color(0xFF6794AA),
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.dashboard_outlined), label: 'DASH'),
+          BottomNavigationBarItem(icon: Icon(Icons.search_outlined), label: 'DISCOVER'),
+          BottomNavigationBarItem(icon: Icon(Icons.event_note_outlined), label: 'MY EVENTS'),
+          BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'PROFILE'),
+        ],
+        onTap: (index) {
+          setState(() {
+            _selectedIndex = index;
+          });
+        },
       ),
     );
   }
 
-  static Widget _buildStatCard(String label, String value, IconData icon) {
-    const primaryColor = Color(0xFF6794AA);
-    const textColor = Color(0xFF1F2937);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF9FAFB),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
-        ),
-        child: Column(
+  Widget _buildDashView(BuildContext context, dynamic user) {
+    final nearbyEventsAsync = ref.watch(nearbyEventsProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildHeader(context, user),
+          const SizedBox(height: 24),
+          _buildStatsGrid(user),
+          const SizedBox(height: 32),
+          _buildQuickAccess(context),
+          const SizedBox(height: 32),
+          _buildNearbyEvents(context, nearbyEventsAsync),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDiscoverView(BuildContext context) {
+    final allEventsAsync = ref.watch(discoverEventsProvider);
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(20.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Discover Opportunities', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+          const Text('Find ways to contribute beyond your local area.', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 24),
+          allEventsAsync.when(
+            data: (events) {
+              if (events.isEmpty) return const Center(child: Text('No upcoming events found.'));
+              return Column(
+                children: events.map((e) => _buildDiscoveryCard(context, e)).toList(),
+              );
+            },
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, _) => Text('Error: $err'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader(BuildContext context, dynamic user) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF9CA3AF),
-                      fontWeight: FontWeight.w600,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Icon(icon, color: primaryColor, size: 16),
-              ],
+            Text('Hello, ${user?.name ?? "Volunteer"}', style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 4),
+            Text('${user?.city}, ${user?.country}', style: const TextStyle(color: Colors.blueGrey)),
+          ],
+        ),
+        IconButton(
+          onPressed: () async {
+            final repo = ref.read(authRepositoryProvider);
+            await repo.signOut();
+            if (context.mounted) context.go('/select-role');
+          },
+          icon: const Icon(Icons.logout),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStatsGrid(dynamic user) {
+    return GridView.count(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      crossAxisCount: 2,
+      crossAxisSpacing: 16,
+      mainAxisSpacing: 16,
+      childAspectRatio: 1.5,
+      children: [
+        _buildStatCard('Total Points', '${user?.points ?? 0}', Icons.star_border, Colors.amber),
+        _buildStatCard('Events Joined', '${user?.eventsJoined ?? 0}', Icons.event_available, Colors.blue),
+        _buildStatCard('Tasks Done', '${user?.tasksCompleted ?? 0}', Icons.task_alt, Colors.green),
+        _buildStatCard('Global Rank', '#${user?.points == 0 ? "N/A" : "12"}', Icons.leaderboard_outlined, Colors.purple),
+      ],
+    );
+  }
+
+  Widget _buildStatCard(String label, String value, IconData icon, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const Spacer(),
+          Text(value, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(label, style: const TextStyle(fontSize: 11, color: Colors.blueGrey)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAccess(BuildContext context) {
+    return Row(
+      children: [
+        _buildQuickCircle(context, 'Leaderboard', Icons.emoji_events_outlined, '/leaderboard'),
+        _buildQuickCircle(context, 'My Tasks', Icons.assignment_outlined, '/volunteer-dashboard/my-tasks'),
+        _buildQuickCircle(context, 'Certificates', Icons.workspace_premium_outlined, '/profile'),
+      ],
+    );
+  }
+
+  Widget _buildQuickCircle(BuildContext context, String label, IconData icon, String route) {
+    return Expanded(
+      child: InkWell(
+        onTap: () => context.push(route),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: const BoxDecoration(color: Color(0xFFEFF6FF), shape: BoxShape.circle),
+              child: Icon(icon, color: const Color(0xFF6794AA)),
             ),
             const SizedBox(height: 8),
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w500)),
           ],
         ),
       ),
     );
   }
 
-  static Widget _buildInfoTile(IconData icon, String label, String value) {
-    const textColor = Color(0xFF1F2937);
-    const primaryColor = Color(0xFF6794AA);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFE5E7EB)),
+  Widget _buildNearbyEvents(BuildContext context, AsyncValue<List<Event>> nearbyEventsAsync) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text('Nearby Events', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        const SizedBox(height: 16),
+        nearbyEventsAsync.when(
+          data: (events) {
+            if (events.isEmpty) return const Text('No events found near you.', style: TextStyle(color: Colors.grey));
+            return Column(
+              children: events.map((e) => _buildDiscoveryCard(context, e)).toList(),
+            );
+          },
+          loading: () => const Center(child: CircularProgressIndicator()),
+          error: (err, stack) => Text('Error: $err'),
         ),
-        child: Row(
-          children: [
-            Icon(icon, color: primaryColor, size: 20),
-            const SizedBox(width: 12),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: Color(0xFF9CA3AF),
+      ],
+    );
+  }
+
+  Widget _buildDiscoveryCard(BuildContext context, Event event) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 16),
+      elevation: 0,
+      color: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: BorderSide(color: Colors.grey[100]!)),
+      child: InkWell(
+        onTap: () => context.push('/volunteer-dashboard/event-details/${event.id}'),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(color: const Color(0xFFF0FDF4), borderRadius: BorderRadius.circular(20)),
+                    child: Text(event.category, style: const TextStyle(color: Color(0xFF166534), fontSize: 10, fontWeight: FontWeight.bold)),
                   ),
-                ),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-              ],
-            ),
-          ],
+                  const Spacer(),
+                  const Icon(Icons.location_on, size: 14, color: Colors.blueGrey),
+                  const SizedBox(width: 4),
+                  Text(event.city, style: const TextStyle(fontSize: 12, color: Colors.blueGrey)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Text(event.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_month, size: 16, color: Colors.grey),
+                  const SizedBox(width: 8),
+                  Text(DateFormat('MMM dd, yyyy').format(event.date), style: const TextStyle(fontSize: 13, color: Colors.grey)),
+                  const Spacer(),
+                  Text('${event.volunteersJoined.length} / ${event.maxVolunteers} Vol.', style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Color(0xFF6794AA))),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

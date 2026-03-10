@@ -8,6 +8,7 @@ class Volunteer {
   final String bio;
   final List<String> skills;
   final String country;
+  final String state;
   final String city;
   final DateTime joinDate;
   final int hoursContributed;
@@ -16,6 +17,8 @@ class Volunteer {
   final List<String> certifications;
   final bool isAvailable;
   final List<String> interests;
+  final int points;
+  final List<String> badges;
 
   Volunteer({
     required this.id,
@@ -26,6 +29,7 @@ class Volunteer {
     required this.bio,
     required this.skills,
     required this.country,
+    required this.state,
     required this.city,
     required this.joinDate,
     required this.hoursContributed,
@@ -34,6 +38,8 @@ class Volunteer {
     required this.certifications,
     required this.isAvailable,
     required this.interests,
+    this.points = 0,
+    this.badges = const [],
   });
 
   // Factory constructor to create from JSON (Firebase)
@@ -47,6 +53,7 @@ class Volunteer {
       bio: json['bio'] ?? '',
       skills: List<String>.from(json['skills'] ?? []),
       country: json['country'] ?? '',
+      state: json['state'] ?? '',
       city: json['city'] ?? '',
       joinDate: json['joinDate'] != null
           ? DateTime.parse(json['joinDate'])
@@ -57,6 +64,8 @@ class Volunteer {
       certifications: List<String>.from(json['certifications'] ?? []),
       isAvailable: json['isAvailable'] ?? true,
       interests: List<String>.from(json['interests'] ?? []),
+      points: json['points'] ?? 0,
+      badges: List<String>.from(json['badges'] ?? []),
     );
   }
 
@@ -71,6 +80,7 @@ class Volunteer {
       'bio': bio,
       'skills': skills,
       'country': country,
+      'state': state,
       'city': city,
       'joinDate': joinDate.toIso8601String(),
       'hoursContributed': hoursContributed,
@@ -79,6 +89,8 @@ class Volunteer {
       'certifications': certifications,
       'isAvailable': isAvailable,
       'interests': interests,
+      'points': points,
+      'badges': badges,
     };
   }
 
@@ -92,6 +104,7 @@ class Volunteer {
     String? bio,
     List<String>? skills,
     String? country,
+    String? state,
     String? city,
     DateTime? joinDate,
     int? hoursContributed,
@@ -100,6 +113,8 @@ class Volunteer {
     List<String>? certifications,
     bool? isAvailable,
     List<String>? interests,
+    int? points,
+    List<String>? badges,
   }) {
     return Volunteer(
       id: id ?? this.id,
@@ -110,6 +125,7 @@ class Volunteer {
       bio: bio ?? this.bio,
       skills: skills ?? this.skills,
       country: country ?? this.country,
+      state: state ?? this.state,
       city: city ?? this.city,
       joinDate: joinDate ?? this.joinDate,
       hoursContributed: hoursContributed ?? this.hoursContributed,
@@ -118,6 +134,8 @@ class Volunteer {
       certifications: certifications ?? this.certifications,
       isAvailable: isAvailable ?? this.isAvailable,
       interests: interests ?? this.interests,
+      points: points ?? this.points,
+      badges: badges ?? this.badges,
     );
   }
 }

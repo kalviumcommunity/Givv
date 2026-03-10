@@ -34,9 +34,8 @@ final currentUserProvider = FutureProvider<GivvUser?>((ref) async {
   );
 });
 
-// ─── User Role ────────────────────────────────────────────────────────────────
-// Derives role string from currentUserProvider
-final userRoleProvider = Provider<String?>((ref) {
+// Derives role from currentUserProvider
+final userRoleProvider = Provider<UserRole?>((ref) {
   final userAsync = ref.watch(currentUserProvider);
   return userAsync.whenOrNull(data: (user) => user?.role);
 });

@@ -259,7 +259,7 @@ class AuthRepository {
   /// Gets the current user's role
   /// 
   /// Returns null if not authenticated or role not found
-  Future<String?> getCurrentUserRole() async {
+  Future<UserRole?> getCurrentUserRole() async {
     return _authService.getCurrentUserRole();
   }
 }
