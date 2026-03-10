@@ -107,7 +107,7 @@ class AuthService {
         uid: uid,
         name: orgName,
         email: email.trim(),
-        role: 'organizationAdmin',
+        role: UserRole.organizer,
         organizationName: orgName,
         registrationNumber: registrationNumber,
         phone: phone,
@@ -195,7 +195,7 @@ class AuthService {
         uid: uid,
         name: name,
         email: email.trim(),
-        role: 'volunteer',
+        role: UserRole.volunteer,
         phone: phone,
         country: country,
         city: city,
@@ -325,7 +325,7 @@ class AuthService {
   }
 
   /// Gets the current user's role (returns null if not found)
-  Future<String?> getCurrentUserRole() async {
+  Future<UserRole?> getCurrentUserRole() async {
     try {
       final user = await getCurrentUser();
       return user.role;

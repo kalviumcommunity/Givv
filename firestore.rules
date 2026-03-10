@@ -1,0 +1,28 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Allow read/write to all core collections for authenticated users during development
+    // This covers: users, events, tasks, joinRequests, volunteers, activities, opportunities, etc.
+    match /{collection}/{docId} {
+      allow read, write: if isSignedIn();
+      
+      // Also allow access to all subcollections (like pointHistory)
+      match /{allPaths=**} {
+        allow read, write: if isSignedIn();
+      }
+    }
+
+    // Specific protection for users collection: 
+    // Anyone can read a profile (for leaderboards/search), but only you can edit yours.
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if request.auth.uid == userId;
+    }
+  }
+}

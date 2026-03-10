@@ -59,10 +59,15 @@ class DashboardHeader extends StatelessWidget {
             icon: const Icon(Icons.logout_outlined, color: Colors.redAccent),
             tooltip: 'Sign out',
           ),
-        const CircleAvatar(
+        CircleAvatar(
           radius: 18,
-          backgroundImage:
-              NetworkImage('https://i.pravatar.cc/150?u=org_admin'),
+          backgroundColor: const Color(0xFFE3F2FD),
+          child: ClipOval(
+            child: Image.network(
+              'https://ui-avatars.com/api/?name=${organizationName.replaceAll(' ', '+')}&background=6794AA&color=fff',
+              errorBuilder: (context, error, stackTrace) => const Icon(Icons.person, size: 20, color: Color(0xFF1976D2)),
+            ),
+          ),
         ),
       ],
     );

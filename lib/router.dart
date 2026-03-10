@@ -7,9 +7,15 @@ import 'features/auth/presentation/role_selection_screen.dart';
 import 'features/auth/presentation/organization_signup_screen.dart';
 import 'features/auth/presentation/volunteer_signup_screen.dart';
 import 'features/auth/presentation/login_screen.dart';
+import 'features/auth/presentation/profile_screen.dart';
 import 'features/organization/presentation/screens/organization_dashboard_screen.dart';
 import 'features/organization/presentation/screens/create_event_screen.dart';
 import 'features/volunteer/presentation/screens/volunteer_dashboard_screen.dart';
+import 'features/organization/presentation/screens/event_details_screen.dart';
+import 'features/volunteer/presentation/screens/leaderboard_screen.dart';
+import 'features/volunteer/presentation/screens/my_events_screen.dart';
+import 'features/volunteer/presentation/screens/my_tasks_screen.dart';
+import 'features/volunteer/presentation/screens/volunteer_event_details_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   // Listen to auth state so router refreshes when auth changes
@@ -22,7 +28,7 @@ final routerProvider = Provider<GoRouter>((ref) {
       final authAsync = ref.read(authStateProvider);
       final isLoggedIn = authAsync.valueOrNull != null;
 
-      final protectedRoutes = ['/org-dashboard', '/volunteer-dashboard'];
+      final protectedRoutes = ['/org-dashboard', '/volunteer-dashboard', '/leaderboard'];
       final isGoingToProtected =
           protectedRoutes.any((r) => state.matchedLocation.startsWith(r));
 
@@ -69,12 +75,44 @@ final routerProvider = Provider<GoRouter>((ref) {
             name: 'create-event',
             builder: (context, state) => const CreateEventScreen(),
           ),
+          GoRoute(
+            path: 'event-details/:id',
+            name: 'org-event-details',
+            builder: (context, state) => EventDetailsScreen(eventId: state.pathParameters['id']!),
+          ),
         ],
       ),
       GoRoute(
         path: '/volunteer-dashboard',
         name: 'volunteer-dashboard',
         builder: (context, state) => const VolunteerDashboardScreen(),
+        routes: [
+          GoRoute(
+            path: 'my-events',
+            name: 'my-events',
+            builder: (context, state) => const MyEventsScreen(),
+          ),
+          GoRoute(
+            path: 'my-tasks',
+            name: 'my-tasks',
+            builder: (context, state) => const MyTasksScreen(),
+          ),
+          GoRoute(
+            path: 'event-details/:id',
+            name: 'volunteer-event-details',
+            builder: (context, state) => VolunteerEventDetailsScreen(eventId: state.pathParameters['id']!),
+          ),
+        ],
+      ),
+      GoRoute(
+        path: '/leaderboard',
+        name: 'leaderboard',
+        builder: (context, state) => const LeaderboardScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        name: 'profile',
+        builder: (context, state) => const ProfileScreen(),
       ),
     ],
   );
