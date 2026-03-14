@@ -1,55 +1,54 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../auth/models/user_model.dart';
 
+enum LeaderboardFilter {
+  city,
+  state,
+  national
+}
+
 class LeaderboardService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final String _usersCollection = 'users';
 
-  Future<List<GivvUser>> getNationalLeaderboard({int limit = 50}) async {
-    try {
-      final snapshot = await _firestore
-          .collection(_usersCollection)
-          .where('role', isEqualTo: 'volunteer')
-          .orderBy('points', descending: true)
-          .limit(limit)
-          .get();
-      return snapshot.docs.map((doc) => GivvUser.fromFirestore(doc)).toList();
-    } catch (e) {
-      print('Error fetching national leaderboard: $e');
-      return [];
-    }
-  }
+  Stream<List<GivvUser>> getLeaderboardStream({
+    required LeaderboardFilter filter,
+    required String? orgId,
+    required String? city,
+    required String? state,
+    int limit = 50,
+  }) {
+    Query query = _firestore
+        .collection(_usersCollection)
+        .where('role', isEqualTo: 'volunteer');
 
-  Future<List<GivvUser>> getStateLeaderboard(String state, {int limit = 50}) async {
-    try {
-      final snapshot = await _firestore
-          .collection(_usersCollection)
-          .where('role', isEqualTo: 'volunteer')
-          .where('state', isEqualTo: state)
-          .orderBy('points', descending: true)
-          .limit(limit)
-          .get();
-      return snapshot.docs.map((doc) => GivvUser.fromFirestore(doc)).toList();
-    } catch (e) {
-      print('Error fetching state leaderboard: $e');
-      return [];
+    if (orgId != null && orgId.isNotEmpty) {
+      query = query.where('organizationCode', isEqualTo: orgId);
     }
-  }
 
-  Future<List<GivvUser>> getCityLeaderboard(String city, {int limit = 50}) async {
-    try {
-      final snapshot = await _firestore
-          .collection(_usersCollection)
-          .where('role', isEqualTo: 'volunteer')
-          .where('city', isEqualTo: city)
-          .orderBy('points', descending: true)
-          .limit(limit)
-          .get();
-      return snapshot.docs.map((doc) => GivvUser.fromFirestore(doc)).toList();
-    } catch (e) {
-      print('Error fetching city leaderboard: $e');
-      return [];
+    switch (filter) {
+      case LeaderboardFilter.city:
+        if (city != null) {
+          query = query.where('city', isEqualTo: city);
+        }
+        break;
+      case LeaderboardFilter.state:
+        if (state != null) {
+          query = query.where('state', isEqualTo: state);
+        }
+        break;
+      case LeaderboardFilter.national:
+        // No additional filters
+        break;
     }
+
+    return query
+        .orderBy('points', descending: true)
+        .limit(limit)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) => GivvUser.fromFirestore(doc)).toList();
+    });
   }
 
   Future<int> getUserRank(int userPoints) async {
@@ -60,8 +59,6 @@ class LeaderboardService {
           .where('points', isGreaterThan: userPoints)
           .count()
           .get();
-      // count returns the number of people with MORE points.
-      // So if 0 people have more points, your rank is 1.
       return (snapshot.count ?? 0) + 1;
     } catch (e) {
       print('Error calculating user rank: $e');
