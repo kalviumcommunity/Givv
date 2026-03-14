@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart' hide Task;
 import 'dart:io';
+import 'dart:typed_data';
 import '../models/task_model.dart';
 
 class TaskService {
@@ -55,6 +56,18 @@ class TaskService {
       return await ref.getDownloadURL();
     } catch (e) {
       print('Error uploading proof image: $e');
+      return null;
+    }
+  }
+
+  Future<String?> uploadProofImageBytes(String taskId, Uint8List imageBytes, String fileName) async {
+    try {
+      final ref = _storage.ref().child('task_proofs/${taskId}_$fileName');
+      final metadata = SettableMetadata(contentType: 'image/jpeg');
+      await ref.putData(imageBytes, metadata);
+      return await ref.getDownloadURL();
+    } catch (e) {
+      print('Error uploading proof image bytes: $e');
       return null;
     }
   }

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../shared/widgets/leaderboard_list.dart';
+import '../../../../shared/widgets/leaderboard_list.dart';
 import '../../../auth/providers/auth_providers.dart';
 import '../../services/leaderboard_service.dart';
 
