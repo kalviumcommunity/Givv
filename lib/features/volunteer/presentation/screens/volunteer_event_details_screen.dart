@@ -7,6 +7,7 @@ import '../../../organization/providers/request_provider.dart';
 import '../../../organization/models/join_request_model.dart';
 import '../../../organization/presentation/widgets/event_info_card.dart';
 import '../../../volunteer/services/point_service.dart';
+import '../../presentation/screens/volunteer_dashboard_screen.dart';
 
 class VolunteerEventDetailsScreen extends ConsumerWidget {
   final String eventId;
@@ -95,6 +96,8 @@ class VolunteerEventDetailsScreen extends ConsumerWidget {
       final success = await ref.read(eventProvider.notifier).updateEvent(event.copyWith(volunteersJoined: updatedVolunteers));
       if (success) {
         await PointService().awardPointsForJoinEvent(userId);
+        ref.invalidate(currentUserProvider);
+        ref.invalidate(userRankProvider);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Joined successfully! +10 Points'), backgroundColor: Colors.green));
         }

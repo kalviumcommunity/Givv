@@ -7,6 +7,13 @@ import '../../data/repositories/volunteer_repository.dart';
 import 'package:intl/intl.dart';
 import 'my_events_screen.dart';
 import '../../../auth/presentation/profile_screen.dart';
+import '../../services/leaderboard_service.dart';
+
+final userRankProvider = FutureProvider<int>((ref) async {
+  final user = ref.watch(currentUserProvider).value;
+  if (user == null) return -1;
+  return LeaderboardService().getUserRank(user.points);
+});
 
 final nearbyEventsProvider = FutureProvider<List<Event>>((ref) async {
   final user = ref.watch(currentUserProvider).value;
@@ -41,7 +48,7 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
             return IndexedStack(
               index: _selectedIndex,
               children: [
-                _buildDashView(context, user),
+                _buildDashView(context, user, ref),
                 _buildDiscoverView(context),
                 const MyEventsScreen(isTab: true),
                 const ProfileScreen(isTab: true),
@@ -72,8 +79,9 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
     );
   }
 
-  Widget _buildDashView(BuildContext context, dynamic user) {
+  Widget _buildDashView(BuildContext context, dynamic user, WidgetRef ref) {
     final nearbyEventsAsync = ref.watch(nearbyEventsProvider);
+    final rankAsync = ref.watch(userRankProvider);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
@@ -82,7 +90,7 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
         children: [
           _buildHeader(context, user),
           const SizedBox(height: 24),
-          _buildStatsGrid(user),
+          _buildStatsGrid(user, rankAsync),
           const SizedBox(height: 32),
           _buildQuickAccess(context),
           const SizedBox(height: 32),
@@ -142,7 +150,13 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
     );
   }
 
-  Widget _buildStatsGrid(dynamic user) {
+  Widget _buildStatsGrid(dynamic user, AsyncValue<int> rankAsync) {
+    final rankText = rankAsync.when(
+      data: (r) => r == -1 ? 'N/A' : '#$r',
+      loading: () => '...',
+      error: (_, __) => 'N/A',
+    );
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -154,7 +168,7 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
         _buildStatCard('Total Points', '${user?.points ?? 0}', Icons.star_border, Colors.amber),
         _buildStatCard('Events Joined', '${user?.eventsJoined ?? 0}', Icons.event_available, Colors.blue),
         _buildStatCard('Tasks Done', '${user?.tasksCompleted ?? 0}', Icons.task_alt, Colors.green),
-        _buildStatCard('Global Rank', '#${user?.points == 0 ? "N/A" : "12"}', Icons.leaderboard_outlined, Colors.purple),
+        _buildStatCard('Global Rank', rankText, Icons.leaderboard_outlined, Colors.purple),
       ],
     );
   }

@@ -38,10 +38,24 @@ class PointService {
 
   Future<void> awardPointsForJoinEvent(String userId) async {
     await awardPoints(userId, pointsJoinEvent, 'Joined Event');
+    try {
+      await _firestore.collection(_usersCollection).doc(userId).update({
+        'eventsJoined': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Error updating eventsJoined: $e');
+    }
   }
 
   Future<void> awardPointsForTaskVerification(String userId) async {
     // Complete Task + Verified Proof
     await awardPoints(userId, pointsCompleteTask + pointsVerifiedProof, 'Task Verified');
+    try {
+      await _firestore.collection(_usersCollection).doc(userId).update({
+        'tasksCompleted': FieldValue.increment(1),
+      });
+    } catch (e) {
+      print('Error updating tasksCompleted: $e');
+    }
   }
 }
