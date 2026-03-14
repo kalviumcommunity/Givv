@@ -34,7 +34,7 @@ class _OrganizationDashboardScreenState extends ConsumerState<OrganizationDashbo
         child: IndexedStack(
           index: _selectedIndex,
           children: [
-            _buildDashboard(statsAsync, userAsync),
+            _buildDashboard(statsAsync, userAsync, eventsAsync),
             _buildEvents(eventsAsync, context),
             _buildTeam(eventsAsync, statsAsync),
           ],
@@ -64,7 +64,7 @@ class _OrganizationDashboardScreenState extends ConsumerState<OrganizationDashbo
     );
   }
 
-  Widget _buildDashboard(AsyncValue statsAsync, AsyncValue userAsync) {
+  Widget _buildDashboard(AsyncValue statsAsync, AsyncValue userAsync, AsyncValue<List<Event>> eventsAsync) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
       child: Column(
@@ -86,29 +86,31 @@ class _OrganizationDashboardScreenState extends ConsumerState<OrganizationDashbo
           const SizedBox(height: 32),
           const Text('Today\'s Impact', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
           const SizedBox(height: 12),
-          _buildImpactBanner(),
+          _buildImpactBanner(eventsAsync),
         ],
       ),
     );
   }
 
-  Widget _buildImpactBanner() {
+  Widget _buildImpactBanner(AsyncValue<List<Event>> eventsAsync) {
+    final upcomingCount = eventsAsync.valueOrNull?.where((e) => e.status == EventStatus.upcoming).length ?? 0;
+    
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [Color(0xFF6794AA), Color(0xFF4A6E81)]),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: const Row(
+      child: Row(
         children: [
-          Icon(Icons.auto_awesome, color: Colors.white, size: 32),
-          SizedBox(width: 16),
+          const Icon(Icons.auto_awesome, color: Colors.white, size: 32),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Ready to change lives?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                Text('You have 1 event starting soon. Verify tasks to award points!', style: TextStyle(color: Colors.white70, fontSize: 12)),
+                const Text('Ready to change lives?', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                Text('You have $upcomingCount event(s) coming up. Verify tasks to award points!', style: const TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),

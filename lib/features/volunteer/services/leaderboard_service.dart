@@ -51,4 +51,21 @@ class LeaderboardService {
       return [];
     }
   }
+
+  Future<int> getUserRank(int userPoints) async {
+    try {
+      final snapshot = await _firestore
+          .collection(_usersCollection)
+          .where('role', isEqualTo: 'volunteer')
+          .where('points', isGreaterThan: userPoints)
+          .count()
+          .get();
+      // count returns the number of people with MORE points.
+      // So if 0 people have more points, your rank is 1.
+      return (snapshot.count ?? 0) + 1;
+    } catch (e) {
+      print('Error calculating user rank: $e');
+      return -1;
+    }
+  }
 }
