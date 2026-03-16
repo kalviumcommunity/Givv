@@ -93,7 +93,7 @@ class _OrganizationDashboardScreenState extends ConsumerState<OrganizationDashbo
   }
 
   Widget _buildImpactBanner(AsyncValue<List<Event>> eventsAsync) {
-    final upcomingCount = eventsAsync.valueOrNull?.where((e) => e.status == EventStatus.upcoming).length ?? 0;
+    final upcomingCount = eventsAsync.valueOrNull?.where((e) => e.computedStatus == EventStatus.upcoming).length ?? 0;
     
     return Container(
       padding: const EdgeInsets.all(20),
@@ -130,9 +130,9 @@ class _OrganizationDashboardScreenState extends ConsumerState<OrganizationDashbo
           const SizedBox(height: 24),
           eventsAsync.when(
             data: (events) {
-              final upcoming = events.where((e) => e.status == EventStatus.upcoming).toList();
-              final ongoing = events.where((e) => e.status == EventStatus.ongoing).toList();
-              final past = events.where((e) => e.status == EventStatus.past).toList();
+              final upcoming = events.where((e) => e.computedStatus == EventStatus.upcoming).toList();
+              final ongoing = events.where((e) => e.computedStatus == EventStatus.ongoing).toList();
+              final past = events.where((e) => e.computedStatus == EventStatus.past).toList();
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

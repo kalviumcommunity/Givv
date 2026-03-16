@@ -34,6 +34,10 @@ class VolunteerDashboardScreen extends ConsumerStatefulWidget {
 
 class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScreen> {
   int _selectedIndex = 0;
+  String _filterLevel = 'World'; // 'District', 'State', 'Country', 'World'
+  String? _selectedCountry;
+  String? _selectedState;
+  String? _selectedCity;
 
   @override
   Widget build(BuildContext context) {
@@ -103,24 +107,189 @@ class _VolunteerDashboardScreenState extends ConsumerState<VolunteerDashboardScr
   Widget _buildDiscoverView(BuildContext context) {
     final allEventsAsync = ref.watch(discoverEventsProvider);
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text('Discover Opportunities', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-          const Text('Find ways to contribute beyond your local area.', style: TextStyle(color: Colors.grey)),
-          const SizedBox(height: 24),
-          allEventsAsync.when(
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Discover Opportunities', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+              const Text('Find ways to contribute beyond your local area.', style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+        Expanded(
+          child: allEventsAsync.when(
             data: (events) {
-              if (events.isEmpty) return const Center(child: Text('No upcoming events found.'));
+              // Extract unique locations from events
+              final countries = events.map((e) => e.country).where((c) => c.isNotEmpty).toSet().toList()..sort();
+              final states = events
+                  .where((e) => _selectedCountry == null || e.country == _selectedCountry)
+                  .map((e) => e.state)
+                  .where((s) => s.isNotEmpty)
+                  .toSet()
+                  .toList()
+                  ..sort();
+              final cities = events
+                  .where((e) => (_selectedCountry == null || e.country == _selectedCountry) && 
+                                (_selectedState == null || e.state == _selectedState))
+                  .map((e) => e.city)
+                  .where((c) => c.isNotEmpty)
+                  .toSet()
+                  .toList()
+                  ..sort();
+
+              // Filtering logic
+              final filteredEvents = events.where((e) {
+                bool matches = true;
+                if (_selectedCountry != null) matches &= (e.country == _selectedCountry);
+                if (_selectedState != null) matches &= (e.state == _selectedState);
+                if (_selectedCity != null) matches &= (e.city == _selectedCity);
+                return matches;
+              }).toList();
+
               return Column(
-                children: events.map((e) => _buildDiscoveryCard(context, e)).toList(),
+                children: [
+                  const SizedBox(height: 20),
+                  _buildLocationFilters(countries, states, cities),
+                  Expanded(
+                    child: filteredEvents.isEmpty
+                        ? _buildEmptyDiscoverState()
+                        : ListView.builder(
+                            padding: const EdgeInsets.all(20),
+                            itemCount: filteredEvents.length,
+                            itemBuilder: (context, index) => _buildDiscoveryCard(context, filteredEvents[index]),
+                          ),
+                  ),
+                ],
               );
             },
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, _) => Text('Error: $err'),
+            error: (err, _) => Center(child: Text('Error: $err')),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationFilters(List<String> countries, List<String> states, List<String> cities) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      child: Column(
+        children: [
+          Row(
+            children: [
+              _buildFilterDropdown(
+                hint: 'Country',
+                value: _selectedCountry,
+                items: countries,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedCountry = val;
+                    _selectedState = null;
+                    _selectedCity = null;
+                  });
+                },
+              ),
+              const SizedBox(width: 12),
+              _buildFilterDropdown(
+                hint: 'State',
+                value: _selectedState,
+                items: states,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedState = val;
+                    _selectedCity = null;
+                  });
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _buildFilterDropdown(
+                hint: 'District',
+                value: _selectedCity,
+                items: cities,
+                onChanged: (val) {
+                  setState(() {
+                    _selectedCity = val;
+                  });
+                },
+              ),
+              if (_selectedCountry != null || _selectedState != null || _selectedCity != null) ...[
+                const SizedBox(width: 12),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _selectedCountry = null;
+                      _selectedState = null;
+                      _selectedCity = null;
+                    });
+                  },
+                  icon: const Icon(Icons.refresh, size: 16),
+                  label: const Text('Clear', style: TextStyle(fontSize: 12)),
+                  style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+                ),
+              ] else
+                const Spacer(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterDropdown({
+    required String hint,
+    required String? value,
+    required List<String> items,
+    required void Function(String?) onChanged,
+  }) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey[200]!),
+          boxShadow: [
+            BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 4, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: value,
+            hint: Text(hint, style: const TextStyle(fontSize: 13, color: Colors.blueGrey)),
+            isExpanded: true,
+            icon: const Icon(Icons.arrow_drop_down, color: Colors.blueGrey),
+            style: const TextStyle(fontSize: 14, color: Colors.black87),
+            items: [
+              ...items.map((item) => DropdownMenuItem(
+                    value: item,
+                    child: Text(item, overflow: TextOverflow.ellipsis),
+                  )),
+            ],
+            onChanged: onChanged,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyDiscoverState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.search_off, size: 64, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text('No events found for this selection', style: TextStyle(color: Colors.grey)),
+          const SizedBox(height: 8),
+          const Text('Try broadening your search or clearing filters.', style: TextStyle(fontSize: 12, color: Colors.blueGrey)),
         ],
       ),
     );
