@@ -31,9 +31,9 @@ class EventInfoCard extends StatelessWidget {
                 ),
                 const Spacer(),
                 Text(
-                  event.status.name.toUpperCase(),
+                  event.computedStatus.name.toUpperCase(),
                   style: TextStyle(
-                    color: event.status == EventStatus.ongoing ? Colors.green : Colors.blueGrey,
+                    color: event.computedStatus == EventStatus.ongoing ? Colors.green : Colors.blueGrey,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),

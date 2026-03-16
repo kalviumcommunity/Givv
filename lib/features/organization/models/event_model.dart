@@ -7,6 +7,8 @@ class Event {
   final String description;
   final String category;
   final String city;
+  final String state;
+  final String country;
   final double? latitude;
   final double? longitude;
   final DateTime date;
@@ -18,12 +20,24 @@ class Event {
   final List<String> volunteersJoined;
   final List<String> pendingRequests;
 
+  EventStatus get computedStatus {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final eventDate = DateTime(date.year, date.month, date.day);
+    
+    if (eventDate.isBefore(today)) return EventStatus.past;
+    if (eventDate.isAtSameMomentAs(today)) return EventStatus.ongoing;
+    return EventStatus.upcoming;
+  }
+
   Event({
     required this.id,
     required this.title,
     required this.description,
     required this.category,
     required this.city,
+    this.state = '',
+    this.country = '',
     this.latitude,
     this.longitude,
     required this.date,
@@ -43,6 +57,8 @@ class Event {
       'description': description,
       'category': category,
       'city': city,
+      'state': state,
+      'country': country,
       'latitude': latitude,
       'longitude': longitude,
       'date': date.toIso8601String(),
@@ -63,6 +79,8 @@ class Event {
       description: json['description'] ?? '',
       category: json['category'] ?? 'Other',
       city: json['city'] ?? '',
+      state: json['state'] ?? '',
+      country: json['country'] ?? '',
       latitude: (json['latitude'] as num?)?.toDouble(),
       longitude: (json['longitude'] as num?)?.toDouble(),
       date: json['date'] != null ? DateTime.parse(json['date']) : DateTime.now(),
@@ -88,6 +106,8 @@ class Event {
     String? description,
     String? category,
     String? city,
+    String? state,
+    String? country,
     double? latitude,
     double? longitude,
     DateTime? date,
@@ -105,6 +125,8 @@ class Event {
       description: description ?? this.description,
       category: category ?? this.category,
       city: city ?? this.city,
+      state: state ?? this.state,
+      country: country ?? this.country,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       date: date ?? this.date,

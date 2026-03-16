@@ -16,6 +16,8 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
   final _titleController = TextEditingController();
   final _descriptionController = TextEditingController();
   final _cityController = TextEditingController();
+  final _stateController = TextEditingController();
+  final _countryController = TextEditingController();
   final _maxVolunteersController = TextEditingController(text: '10');
   final _tasksController = TextEditingController();
   
@@ -36,6 +38,8 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
     _titleController.dispose();
     _descriptionController.dispose();
     _cityController.dispose();
+    _stateController.dispose();
+    _countryController.dispose();
     _maxVolunteersController.dispose();
     _tasksController.dispose();
     super.dispose();
@@ -78,6 +82,8 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
         description: _descriptionController.text,
         category: _selectedCategory,
         city: _cityController.text,
+        state: _stateController.text,
+        country: _countryController.text,
         date: _selectedDate!,
         maxVolunteers: int.tryParse(_maxVolunteersController.text) ?? 10,
         joinType: _selectedJoinType,
@@ -194,11 +200,43 @@ class _CreateEventScreenState extends ConsumerState<CreateEventScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildLabel('City'),
+                        _buildLabel('District / City'),
                         TextFormField(
                           controller: _cityController,
-                          decoration: _buildInputDecoration('Location'),
+                          decoration: _buildInputDecoration('City'),
                           validator: (val) => val == null || val.isEmpty ? 'City is required' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel('State'),
+                        TextFormField(
+                          controller: _stateController,
+                          decoration: _buildInputDecoration('State'),
+                          validator: (val) => val == null || val.isEmpty ? 'State is required' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildLabel('Country'),
+                        TextFormField(
+                          controller: _countryController,
+                          decoration: _buildInputDecoration('Country'),
+                          validator: (val) => val == null || val.isEmpty ? 'Country is required' : null,
                         ),
                       ],
                     ),

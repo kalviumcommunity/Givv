@@ -27,9 +27,9 @@ class MyEventsScreen extends ConsumerWidget {
         if (events.isEmpty) {
           return _buildEmptyState();
         }
-        final upcoming = events.where((e) => e.status == EventStatus.upcoming).toList();
-        final ongoing = events.where((e) => e.status == EventStatus.ongoing).toList();
-        final past = events.where((e) => e.status == EventStatus.past).toList();
+        final upcoming = events.where((e) => e.computedStatus == EventStatus.upcoming).toList();
+        final ongoing = events.where((e) => e.computedStatus == EventStatus.ongoing).toList();
+        final past = events.where((e) => e.computedStatus == EventStatus.past).toList();
 
         return DefaultTabController(
           length: 3,
